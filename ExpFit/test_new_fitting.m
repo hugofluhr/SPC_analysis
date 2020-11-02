@@ -21,27 +21,79 @@ comp1=comp(w,shift,tau1,bins);
 comp2=comp(w,shift,tau2,bins);
 
 
-%% test data
-if ~exist('fitQ','var') 
-    load fitTestData.mat
+%% test data, try to apply mask
+countThresh = 5;
+testData = squeeze(Q(301,:,:,:));
+% imtool(sum(testData,3),[]);
+mask=max(testData,[],3)>countThresh;
+tic
+for i = 1:size(testData,1)
+    for j = 1:size(testData,2)
+        if ~mask(i,j)
+            testData(i,j,:)=0;
+        end
+    end
 end
-pixels=reshape(fitQ,[],256);
-highPix =pixels(photCount>100,:);
-
-%%
+toc
+fprintf('%d pixels left\n',numel(find(mask(:))));
+%% Fitting
 clear b dev stats
 tic
-for i = 1:size(highPix,1)% 1:50%size(pixels,1)
-    testPix=highPix(i,:);
-    [b{i},dev{i},stats{i}] = glmfit([comp1 comp2],testPix,[],'constant','off');
+for idx = 1:prod(sizePix)
+    [i, j] = ind2sub(sizePix,idx);
+    pixel=squeeze(testData(i,j,:));
+    if sum(pixel)==0
+        b{idx}=[0; 0]; dev{idx} = nan; stats{idx} = nan;
+    else
+        [b{idx},dev{idx},stats{idx}] = glmfit([comp1 comp2],pixel,[],'constant','off');
+    end
 %     [b,dev,stats] = glmfit([comp1 comp2],testPix,[],'constant','off');
 end
 toc
+
+%%
 % 
 % figure
 % plot(bins,testPix,bins,b(1)*comp1+b(2)*comp2)
-b = cell2mat(b);
+if iscell(b)
+    b = cell2mat(b);
+end
+p1 = round(reshape(b(1,:),sizePix(1),sizePix(2)),1);
+p2 = round(reshape(b(2,:),sizePix(1),sizePix(2)),1);
+R = zeros(sizePix);
+% figure
+for i =1:sizePix(1)
+    for j = 1:sizePix(2)
+        if p1(i,j)<=0 || p2(i,j)<=0
+            R(i,j) = 0;
+        else
+            R(i,j) = p1(i,j)./p2(i,j);
+%             plot(bins,squeeze(testData(i,j,:)))
+%             hold on
+%             plot(bins,p1(i,j)*comp1+p2(i,j)*comp2,'LineWidth',2)
+%             hold off
+%             drawnow
+%             pause(0.5)
+        end
+    end
+end
+% histogram(R)
+% set(gca,'YScale','log')
+if iscell(dev)
+    dev = cell2mat(dev);
+    dev = reshape(dev,sizePix);
+end
 
+%%
+figure
+histogram(p1(:),20)
+set(gca,'YScale','log')
+hold on
+histogram(p2(:),20)
+set(gca,'YScale','log')
+legend({'p1','p2'})
+imtool((R),[],'InitialMagnification',300)
+return
 %% Stuff
 % plot(bins,testPix,bins,b(1)*comp1+b(2)*comp2)
 figure
@@ -54,6 +106,34 @@ title('B')
 subplot(133)
 histogram(b(1,:)./b(2,:),10)
 title('Ratio')
+
+%% figure with photCount and R overlayed
+clear residuals
+if ~exist('residuals','var')
+   residuals=stats;
+   for i = 1:numel(residuals)
+       if isstruct(residuals{i})
+           residuals{i}=sumsqr(residuals{i}.resid);
+       end
+   end
+   residuals=reshape(residuals,sizePix);
+   residuals = cell2mat(residuals);
+end
+
+%%
+cleanR=R;cleanR(cleanR>prctile(R(:),95))=0;
+photCount=sum(testData,3);
+figure
+subplot(311)
+imshow(photCount,[])
+title('Photon Count')
+subplot(312)
+imshow(cleanR,[])
+title('Ratio')
+subplot(313)
+% imshow(dev./photCount,[])
+imshow(residuals./photCount,[])
+title('Deviance divided by Photon Count')
 %% compare with old fitting, super slow
 
 lower = [w,shift,0.1,0.1,tau1,tau2];
