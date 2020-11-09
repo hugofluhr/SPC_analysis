@@ -19,7 +19,7 @@ if ndims(data)==4 % if data is a stack of frames
     y = squeeze(sum(sum(sum(data,1),2),3));
 elseif ndims(data)==3 % data is a single frame
     y = squeeze(sum(sum(data,1),2));
-elseif ndims(data)==2 % data is already a timecourse (number of photons per time bin)
+elseif ndims(data)==2 %#ok<ISMAT> % data is already a timecourse (number of photons per time bin)
     y = data;
 end
  
