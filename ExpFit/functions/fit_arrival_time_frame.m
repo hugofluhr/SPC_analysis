@@ -15,17 +15,43 @@ p = inputParser;
 addOptional(p,'mask',false);
 addOptional(p,'individualFrames',false);
 
-if ~p.mask
+if isequal(p.mask,false) % no masks inputted
     if ndims(data)==4 % if data is a stack of frames
         if p.individualFrames
             for f = 1:size(data,1)
-                fitOut{f} = fitModelFunc(
-        y = squeeze(sum(sum(sum(data,1),2),3));
+                y = squeeze(sum(sum(data(f,:,:,:),2),3));
+                fitOut{f} = fitModelFunc(y);
+            end
+            fitOut = cell2mat(fitOut);
+        else
+            y = squeeze(sum(sum(sum(data,1),2),3));
+            fitOut = fitModelFunc(y);
+        end
     elseif ndims(data)==3 % data is a single frame
         y = squeeze(sum(sum(data,1),2));
+        fitOut = fitModelFunc(y);
     elseif ndims(data)==2 %#ok<ISMAT> % data is already a timecourse (number of photons per time bin)
         y = data;
+        fitOut = fitModelFunc(y);
     end
+elseif ismatrix(p.mask)
+    if ndims(data)==4 % if data is a stack of frames, I assume that all frames of the stack use the same mask(s)
+        % also this does not support fitting individual frames for now.
+        if p.individualFrames
+            for f = 1:size(data,1)
+                y = squeeze(sum(sum(data(f,:,:,:),2),3));
+                fitOut{f} = fitModelFunc(y);
+            end
+            fitOut = cell2mat(fitOut);
+        else
+            y = squeeze(sum(sum(sum(data,1),2),3));
+            fitOut = fitModelFunc(y);
+        end
+    elseif ndims(data)==3 % data is a single frame
+        y = squeeze(sum(sum(data,1),2));
+        fitOut = fitModelFunc(y);
+    if numel(unique(p.mask) == 2 % only 1 mask / binary mask
+        
     
 % case where there is a single mask
 % case with multiple masks
