@@ -1,6 +1,6 @@
 function [thresholdedData, mask] = threshold_lt_data(data,threshold)
 % Threshold data, all pixels that have less than *threshold* photons in the
-% most populated bin will be set to 0
+% most populated bin will be set to 0.
 
 if nargin<2
     threshold = 5;

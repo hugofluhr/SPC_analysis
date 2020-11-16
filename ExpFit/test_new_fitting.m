@@ -36,6 +36,10 @@ for i = 1:size(testData,1)
 end
 toc
 fprintf('%d pixels left\n',numel(find(mask(:))));
+
+%% test functions
+
+[meanLT,fracMat] = computeMeanT_Ratio(testData,'default');
 %% Fitting
 clear b dev stats
 tic
