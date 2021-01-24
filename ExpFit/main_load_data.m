@@ -10,7 +10,9 @@ slices = filelist(contains(filelist.folder,'slice'),:);
 grins = filelist(contains(filelist.folder,'run'),:);
 
 sliceDir = unique(slices.folder,'stable');
-if~exist('akarMice','var') load('akarMice.mat'); end
+if~exist('akarMice','var')
+    load('akarMice.mat');
+end
 sliceDir = sliceDir(contains(sliceDir,akarMice));
 
 %% get all photon counts
@@ -43,8 +45,4 @@ end
 %% Aggregate all data
 allDat.photCount = horzcat(data(:).photCount);
 allDat.acc = sum(allDat.photCount,2);
-
-%%
-bins=load_bins();
-x=bins;
 

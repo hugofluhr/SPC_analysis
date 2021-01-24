@@ -3,7 +3,7 @@ function [photCount,outImage] = read_sdt(path,factor,mode)
 %   Detailed explanation goes here
 
 if mode == 'matfile'
-    [fileDir,fileName,fileExt] = fileparts(path);
+    [fileDir,fileName] = fileparts(path);
     matpath = fullfile(fileDir,strcat(fileName,'.mat'));
     outImage = load(matpath);
     outImage = outImage.data;
