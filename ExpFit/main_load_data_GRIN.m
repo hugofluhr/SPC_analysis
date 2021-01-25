@@ -9,28 +9,31 @@ filelist = filelist(~contains(filelist.folder,'blur'),:);
 slices = filelist(contains(filelist.folder,'slice'),:);
 grins = filelist(contains(filelist.folder,'run'),:);
 
-sliceDir = unique(slices.folder,'stable');
+grinDir = unique(grins.folder,'stable');
 if~exist('akarMice','var')
     load('akarMice.mat');
 end
-sliceDir = sliceDir(contains(sliceDir,akarMice));
-sliceDir=sliceDir([1:3,5:6,8:11]);
-
+grinDir = grinDir(contains(grinDir,akarMice));
+grinDir = grinDir(randperm(numel(grinDir), 20));
 %% get all photon counts
 binFactor = 2;
-frames2drop = 20;
+frames2drop = 1;
 if ~exist('Q','var')
     data = struct('folder',{},'files',{},'photCount',{},'photArrival',{},'acc',{});
-    for dirID = 1:numel(sliceDir)
+    for dirID = 1:numel(grinDir)
         disp(['########## DIR : ',num2str(dirID),' ##########'])
-        data(dirID).folder = sliceDir{dirID};
-        currFiles = slices(strcmp(slices.folder,data(dirID).folder),:);
+        data(dirID).folder = grinDir{dirID};
+        currFiles = grins(strcmp(grins.folder,data(dirID).folder),:);
         currFiles = currFiles(frames2drop:end,:);
         %----------- new line --------------
-        currFiles = currFiles(randperm(height(currFiles),5),:);
+        currFiles = currFiles(randperm(height(currFiles),1),:);
         data(dirID).files = currFiles;
         parfor f = 1:size(currFiles,1)
-            [photCount{f}, photArrival{f}] = read_sdt(fullfile(sliceDir{dirID},currFiles.name{f}),binFactor,'matfile');
+            try
+                [photCount{f}, photArrival{f}] = read_sdt(fullfile(grinDir{dirID},currFiles.name{f}),binFactor,'matfile');
+            catch ME
+                disp('1 error')
+            end
         end
         data(dirID).photCount = horzcat(photCount{:});
         data(dirID).photArrival = cat(4,photArrival{:});
